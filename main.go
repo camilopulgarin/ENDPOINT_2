@@ -1,5 +1,14 @@
 package main
 
+//Recomendaciones
+//Para el correcto funcionamiento de la api debe ser instalada la dependencia gorilla/mux y mysql respectivamente
+// go get -u github.com/gorilla/mux
+// github.com/go-sql-driver/mysql"
+//La api corre en el puerto 8080
+// Puede acceder a la solucion en la siguiente direccion http://localhost:8080/user Para peticiones Post y get sin parametros
+// La estructura de las peticiones Post y Put se encuentran el documento .pdf anexado
+
+
 import (
 	"database/sql"
 	"encoding/json"
@@ -27,18 +36,16 @@ type Users []User
 var usuarios = Users{}
 
 func BD() *sql.DB {
-
-	fmt.Println("Comienzo")
 	bd, err := sql.Open("mysql", "usuarios_jikko:kmilo18200@tcp(db4free.net:3306)/usuarios_jikko")
 	if err != nil {
 		panic(err.Error())
 	}
-	fmt.Println("Conectado a BD")
+	fmt.Println("BD Conectada")
 	return bd
 }
 
 
-func f_get(w http.ResponseWriter, r *http.Request) {
+func GET(w http.ResponseWriter, r *http.Request) {
 
 	bd := BD()
 	consulta, err := bd.Query(
@@ -60,10 +67,9 @@ func f_get(w http.ResponseWriter, r *http.Request) {
 			panic(err.Error())
 		}
 		users = append(users, usuarios)
-		//fmt.Println(usuarios)
+
 	}
-	//fmt.Println(users)
-	//escribir
+
 	w.Header().Set("Contet-Type", "application/json")
 	j, err := json.Marshal(users)
 	if err != nil {
@@ -78,11 +84,10 @@ func f_get(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func f_get_id(w http.ResponseWriter, r *http.Request) {
+func GET_ID(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id := vars["id"]
-
 	bd := BD()
 	consulta, err := bd.Query(
 		" SELECT ID_user,Nombre_User,Telefono,Tipo_Documento.Tipo_Documento Tipo_Documento,Ducument,Sexo,Tipo_Rol.Tipo_Rol Tipo_Rol "+
@@ -104,8 +109,7 @@ func f_get_id(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-	//fmt.Println(users)
-	//escribir
+
 	w.Header().Set("Contet-Type", "application/json")
 	j, err := json.Marshal(usuario)
 	if err != nil {
@@ -119,23 +123,23 @@ func f_get_id(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func f_post(w http.ResponseWriter, r *http.Request) {
+func POST(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Entra al post")
 	bd := BD()
 	var usuario User
 
-	//err := json.NewDecoder(r.Body).Decode(&l_in)
-	reqBody, err := ioutil.ReadAll(r.Body) //leemos tooodo
+
+	reqBody, err := ioutil.ReadAll(r.Body)
 	json.Unmarshal(reqBody, &usuario)
 
-	consulta_documento, err := bd.Query("SELECT ID_Documento From  Tipo_Documento WHERE Tipo_Documento  = ?", usuario.Tipo_Doc_ID)
-	consulta_documento.Next()
-	consulta_documento.Scan(&usuario.Tipo_Doc_ID)
+	consult_document, err := bd.Query("SELECT ID_Documento From  Tipo_Documento WHERE Tipo_Documento  = ?", usuario.Tipo_Doc_ID)
+	consult_document.Next()
+	consult_document.Scan(&usuario.Tipo_Doc_ID)
 	fmt.Println(usuario.Tipo_Doc_ID)
 
-	consulta_nacionalidad, err := bd.Query("SELECT ID_Rol From  Tipo_Rol WHERE Tipo_Rol = ?", usuario.Rol_User)
-	consulta_nacionalidad.Next()
-	consulta_nacionalidad.Scan(&usuario.Rol_User)
+	consult_rol, err := bd.Query("SELECT ID_Rol From  Tipo_Rol WHERE Tipo_Rol = ?", usuario.Rol_User)
+	consult_rol.Next()
+	consult_rol.Scan(&usuario.Rol_User)
 	fmt.Println(usuario.Rol_User)
 
 	consulta, err := bd.Query(` INSERT INTO Usuarios (Nombre_User , Ducument , Telefono , Sexo , Tipo_Doc_ID , Rol_User) `+
@@ -149,7 +153,6 @@ func f_post(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "ERRORRRR")
 		panic(err.Error())
 	}
 
@@ -171,25 +174,25 @@ func f_post(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func f_put(w http.ResponseWriter, r *http.Request) {
+func PUT(w http.ResponseWriter, r *http.Request) {
 
 	bd := BD()
 
 	var usuario User
 
-	//err := json.NewDecoder(r.Body).Decode(&l_in)
-	reqBody, err := ioutil.ReadAll(r.Body) //leemos tooodo
+
+	reqBody, err := ioutil.ReadAll(r.Body)
 	json.Unmarshal(reqBody, &usuario)
 
-	consulta_documento, err := bd.Query("SELECT ID_Documento From  Tipo_Documento WHERE Tipo_Documento = ?", usuario.Tipo_Doc_ID)
-	consulta_documento.Next()
-	consulta_documento.Scan(&usuario.Tipo_Doc_ID)
-	//fmt.Println(usuario.Tipo_Doc_ID)
+	consult_document, err := bd.Query("SELECT ID_Documento From  Tipo_Documento WHERE Tipo_Documento = ?", usuario.Tipo_Doc_ID)
+	consult_document.Next()
+	consult_document.Scan(&usuario.Tipo_Doc_ID)
 
-	consulta_nacionalidad, err := bd.Query("SELECT ID_Rol From  Tipo_Rol WHERE Tipo_Rol = ?", usuario.Rol_User)
-	consulta_nacionalidad.Next()
-	consulta_nacionalidad.Scan(&usuario.Rol_User)
-	//fmt.Println(usuario.Rol_User)
+
+	consult_rol, err := bd.Query("SELECT ID_Rol From  Tipo_Rol WHERE Tipo_Rol = ?", usuario.Rol_User)
+	consult_rol.Next()
+	consult_rol.Scan(&usuario.Rol_User)
+
 
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -207,21 +210,20 @@ func f_put(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "ERRORRRR")
+		fmt.Fprintf(w, "Error")
 		panic(err.Error())
 	}
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, "ACTUALIZACION REALIZADA CORRECTAMENTE A ID ", id)
+	fmt.Fprintln(w, "Se actualizó el correctamente el usuario: ", id)
 
 	defer consulta.Close()
 	defer bd.Close()
 
 }
-func f_delete(w http.ResponseWriter, r *http.Request) {
+func DELETE(w http.ResponseWriter, r *http.Request) {
 
 	bd := BD()
-	fmt.Println("DELETE")
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -229,12 +231,12 @@ func f_delete(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "ERRORRRR")
+		fmt.Fprintf(w, "Error")
 		panic(err.Error())
 	}
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, "EL REGISTRO SE HA BORRADO CORRECTAMENTE ")
+	fmt.Fprintln(w, "El usuario se elimino con exito ")
 
 	defer consulta.Close()
 	defer bd.Close()
@@ -242,18 +244,19 @@ func f_delete(w http.ResponseWriter, r *http.Request) {
 }
 func main() {
 	router := mux.NewRouter().StrictSlash(false) // hace las rutas diferentes entre si con slash /
-	router.HandleFunc("/user", f_get).Methods("GET")
-	router.HandleFunc("/user/{id}", f_get_id).Methods("GET")
-	router.HandleFunc("/user", f_post).Methods("POST")
-	router.HandleFunc("/user/{id}", f_put).Methods("PUT")
-	router.HandleFunc("/user/{id}", f_delete).Methods("DELETE")
+	router.HandleFunc("/user", GET).Methods("GET")
+	router.HandleFunc("/user/{id}", GET_ID).Methods("GET")
+	router.HandleFunc("/user", POST).Methods("POST")
+	router.HandleFunc("/user/{id}", PUT).Methods("PUT")
+	router.HandleFunc("/user/{id}", DELETE).Methods("DELETE")
 
+	//Configuracion del servidore
 	server := &http.Server{
-		Addr:           ":8080",          // puerto
-		Handler:        router,           //
-		ReadTimeout:    20 * time.Second, // tiempo de lectura
-		WriteTimeout:   20 * time.Second, // tiempo de escritura
-		MaxHeaderBytes: 1 << 20,          // 1mega en bits
+		Addr:           ":8080",
+		Handler:        router,
+		ReadTimeout:    20 * time.Second,
+		WriteTimeout:   20 * time.Second,
+		MaxHeaderBytes: 1 << 20,
 	}
 	log.Println("Listening....")
 	log.Fatal(server.ListenAndServe())
